@@ -17,7 +17,7 @@ type service struct {
 }
 
 type ResponseType interface {
-	GetResult() []Anime
+	GetResult() interface{}
 }
 
 type AngoClient struct {

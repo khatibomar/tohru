@@ -2,7 +2,9 @@ package angoslayer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,11 +15,19 @@ const (
 	GetAnimeDetailsPath = "anime/public/anime/get-anime-details"
 )
 
-type EndRes struct {
-	Response Response `json:"response"`
+type LatestAnimeEndRes struct {
+	Response LatestAnimeRespond `json:"response"`
 }
 
-func (r *EndRes) GetResult() interface{} {
+func (r *LatestAnimeEndRes) GetResult() []Anime {
+	return r.Response.Data
+}
+
+type AnimeDetailsEndRes struct {
+	Response AnimeDetails `json:"response"`
+}
+
+func (r *AnimeDetailsEndRes) GetResult() AnimeDetails {
 	return r.Response
 }
 
@@ -111,19 +121,19 @@ type LatestAnimeRespond struct {
 
 type AnimeService service
 
-func (s *AnimeService) GetAnime(params url.Values, path, method string) (*EndRes, error) {
+func (s *AnimeService) GetAnime(params url.Values, path, method string) (*http.Response, error) {
 	return s.GetAnimeWithContext(context.Background(), params, path, method)
 }
 
-func (s *AnimeService) GetAnimeWithContext(ctx context.Context, params url.Values, path, method string) (*EndRes, error) {
+func (s *AnimeService) GetAnimeWithContext(ctx context.Context, params url.Values, path, method string) (*http.Response, error) {
 	u, _ := url.Parse(BaseAPI)
 	u.Path = path
 
 	u.RawQuery = params.Encode()
 
-	var res EndRes
-	err := s.client.RequestAndDecode(ctx, method, u.String(), nil, &res)
-	return &res, err
+	var res *http.Response
+	res, err := s.client.Request(ctx, method, u.String(), nil)
+	return res, err
 }
 
 func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
@@ -134,11 +144,13 @@ func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 	if err != nil {
 		return []Anime{}, err
 	}
-	eface := res.GetResult()
-	if rv, ok := eface.(LatestAnimeRespond); ok {
-		return rv.Data, nil
-	}
-	return nil, fmt.Errorf("wrong type received")
+	var animes LatestAnimeEndRes
+	err = json.NewDecoder(res.Body).Decode(&animes)
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	return animes.GetResult(), err
 }
 
 func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {
@@ -152,9 +164,12 @@ func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {
 	if err != nil {
 		return AnimeDetails{}, err
 	}
-	eface := res.GetResult()
-	if rv, ok := eface.(AnimeDetails); ok {
-		return rv, nil
-	}
-	return AnimeDetails{}, fmt.Errorf("wrong type received")
+
+	var details AnimeDetailsEndRes
+	err = json.NewDecoder(res.Body).Decode(&details)
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	return details.GetResult(), err
 }

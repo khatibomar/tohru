@@ -12,25 +12,40 @@ const (
 	BaseAPI = "https://anslayer.com"
 )
 
+type service struct {
+	client *AngoClient
+}
+
 type ResponseType interface {
-	GetResult() string
+	GetResult() []Anime
 }
 
 type AngoClient struct {
-	client *http.Client
-	header http.Header
+	cfg     *Config
+	client  *http.Client
+	header  http.Header
+	service service
+
+	Anime *AnimeService
 }
 
-func NewAngoClient() *AngoClient {
+func NewAngoClient(cfg *Config) *AngoClient {
 	client := http.Client{}
 
 	header := http.Header{}
 	header.Set("Content-Type", "application/json")
+	header.Set("Accept", "*/*")
+	header.Set("Client-Id", cfg.clientID)
+	header.Set("Client-Secret", cfg.clientSecret)
 
 	ango := &AngoClient{
 		client: &client,
 		header: header,
 	}
+
+	ango.service.client = ango
+
+	ango.Anime = (*AnimeService)(&ango.service)
 
 	return ango
 }

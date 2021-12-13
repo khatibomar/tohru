@@ -14,15 +14,22 @@ type AnimeService service
 type order string
 type list string
 type season string
+type JsonPayload map[string]interface{}
 
 func (o order) valid() error {
 	switch o {
 	case AnimeNameAsc:
+		fallthrough
 	case AnimeNameDesc:
+		fallthrough
 	case AnimeYearAsc:
+		fallthrough
 	case AnimeYearDesc:
+		fallthrough
 	case LatestFirst:
+		fallthrough
 	case RatingDesc:
+		fallthrough
 	case EarlierFirst:
 		return nil
 	}
@@ -33,7 +40,9 @@ func (s season) valid() error {
 	switch s {
 	case Fall:
 	case Winter:
+		fallthrough
 	case Summer:
+		fallthrough
 	case Spring:
 		return nil
 	}
@@ -43,29 +52,53 @@ func (s season) valid() error {
 func (l list) valid() error {
 	switch l {
 	case CustomList:
+		fallthrough
 	case AnimeList:
+		fallthrough
 	case CurrentlyAiring:
+		fallthrough
 	case LatestUpdatedEpisode:
+		fallthrough
 	case LatestUpdatedEpisodeNew:
+		fallthrough
 	case TopAnime:
+		fallthrough
 	case TopCurrentlyAiring:
+		fallthrough
 	case TopTv:
+		fallthrough
 	case TopMovie:
+		fallthrough
 	case Featured:
+		fallthrough
 	case Filter:
+		fallthrough
 	case Favoirtes:
+		fallthrough
 	case PlanToWatch:
+		fallthrough
 	case Watched:
+		fallthrough
 	case Dropped:
+		fallthrough
 	case OnHold:
+		fallthrough
 	case WatchedHistory:
+		fallthrough
 	case Schedule:
+		fallthrough
 	case LastAddedTv:
+		fallthrough
 	case LastAddedMovie:
+		fallthrough
 	case TopAnimeMal:
+		fallthrough
 	case CurrentlyAiringMal:
+		fallthrough
 	case TopTvMal:
+		fallthrough
 	case AnimeCharacters:
+		fallthrough
 	case TopUpcoming:
 		return nil
 	}
@@ -222,9 +255,69 @@ type Anime struct {
 	AnimeReleaseDay    string `json:"anime_release_day"`
 }
 
+func (p *JsonPayload) WithOrder(o order) error {
+	if err := o.valid(); err != nil {
+		return err
+	}
+	(*p)["_order_by"] = string(o)
+	return nil
+}
+
+func (p *JsonPayload) WithOffset(offset int) error {
+	if offset < 0 {
+		return fmt.Errorf("Negative Offset")
+	}
+	(*p)["_offset"] = offset
+	return nil
+}
+
+func (p *JsonPayload) WithLimit(limit int) error {
+	if limit <= 0 {
+		return fmt.Errorf("Negative limit or zero")
+	}
+	(*p)["_limit"] = limit
+	return nil
+}
+
+func (p *JsonPayload) WithListType(l list) error {
+	if err := l.valid(); err != nil {
+		return err
+	}
+	(*p)["list_type"] = string(l)
+	return nil
+}
+func (p *JsonPayload) WithJustInfo(info string) error {
+	if info == "No" || info == "Yes" {
+		(*p)["just_info"] = info
+		return nil
+	}
+	return fmt.Errorf("Value must be Yes or No")
+}
+func (p *JsonPayload) WithName(name string) error {
+	(*p)["anime_name"] = name
+	return nil
+}
+
+func (p *JsonPayload) WithSeason(s season) error {
+	if err := s.valid(); err != nil {
+		return err
+	}
+	(*p)["anime_season"] = string(s)
+	return nil
+}
+
+func (p *JsonPayload) String() (string, error) {
+	data, err := json.Marshal(*p)
+	return string(data), err
+}
+
+func (s *AnimeService) CustomAnimePayload(payload string) ([]Anime, error) {
+	return s.getAnimeList(payload)
+}
+
 func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"latest_updated_episode_new","just_info":"Yes"}`, offset, limit)
-	return s.getAnimeList(offset, limit, query)
+	return s.getAnimeList(query)
 }
 
 func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy order) ([]Anime, error) {
@@ -232,7 +325,7 @@ func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy
 		return []Anime{}, err
 	}
 	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"%s","just_info":"Yes"}`, offset, limit, orderBy, animeName)
-	return s.getAnimeList(offset, limit, query)
+	return s.getAnimeList(query)
 }
 
 func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error) {
@@ -240,7 +333,7 @@ func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error
 		return []Anime{}, err
 	}
 	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"","just_info":"Yes"}`, offset, limit, orderBy)
-	return s.getAnimeList(offset, limit, query)
+	return s.getAnimeList(query)
 }
 
 func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, orderBy order, releaseYear int) ([]Anime, error) {
@@ -251,7 +344,7 @@ func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, or
 		return []Anime{}, err
 	}
 	query := fmt.Sprintf(`{"_offset":0,"_limit":30,"_order_by":"%s","list_type":"filter","anime_release_years":%d,"anime_season":"%s","just_info":"Yes"}`, orderBy, releaseYear, season)
-	return s.getAnimeList(offset, limit, query)
+	return s.getAnimeList(query)
 }
 
 func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {
@@ -290,7 +383,7 @@ func (s *AnimeService) getAnimeWithContext(ctx context.Context, params url.Value
 	return res, err
 }
 
-func (s *AnimeService) getAnimeList(offset, limit int, query string) ([]Anime, error) {
+func (s *AnimeService) getAnimeList(query string) ([]Anime, error) {
 	params := url.Values{}
 	params.Set("json", query)
 	res, err := s.getAnime(params, PublishedAnimesPath, http.MethodGet)

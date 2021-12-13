@@ -15,11 +15,11 @@ const (
 	GetAnimeDetailsPath = "anime/public/anime/get-anime-details"
 )
 
-type LatestAnimeEndRes struct {
+type AnimeEndRes struct {
 	Response LatestAnimeRespond `json:"response"`
 }
 
-func (r *LatestAnimeEndRes) GetResult() []Anime {
+func (r *AnimeEndRes) GetResult() []Anime {
 	return r.Response.Data
 }
 
@@ -109,6 +109,7 @@ type Anime struct {
 	AnimeRating        string `json:"anime_rating"`
 	LatestEpisodeID    string `json:"latest_episode_id"`
 	LatestEpisodeName  string `json:"latest_episode_name"`
+	AnimeGenres        string `json:"anime_genres"`
 	AnimeCoverImageURL string `json:"anime_cover_image_url"`
 	AnimeTrailerURL    string `json:"anime_trailer_url"`
 	AnimeReleaseDay    string `json:"anime_release_day"`
@@ -136,21 +137,29 @@ func (s *AnimeService) GetAnimeWithContext(ctx context.Context, params url.Value
 	return res, err
 }
 
-func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
+func (s *AnimeService) GetAnimeList(offset, limit int, query string) ([]Anime, error) {
 	params := url.Values{}
-	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"latest_updated_episode_new","just_info":"Yes"}`, offset, limit)
 	params.Set("json", query)
 	res, err := s.GetAnime(params, LatestsAnimesPath, http.MethodGet)
 	if err != nil {
 		return []Anime{}, err
 	}
-	var animes LatestAnimeEndRes
+	var animes AnimeEndRes
 	err = json.NewDecoder(res.Body).Decode(&animes)
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(res.Body)
-
 	return animes.GetResult(), err
+}
+
+func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
+	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"latest_updated_episode_new","just_info":"Yes"}`, offset, limit)
+	return s.GetAnimeList(offset, limit, query)
+}
+
+func (s *AnimeService) SearchByName(offset, limit int, animeName string) ([]Anime, error) {
+	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"filter","anime_name":"%s","just_info":"Yes"}`, offset, limit, animeName)
+	return s.GetAnimeList(offset, limit, query)
 }
 
 func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {

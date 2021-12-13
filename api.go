@@ -55,7 +55,7 @@ func NewAngoClient(cfg *Config) *AngoClient {
 	return ango
 }
 
-func (c *AngoClient) Request(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+func (c *AngoClient) request(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err
@@ -78,8 +78,8 @@ func (c *AngoClient) Request(ctx context.Context, method, url string, body io.Re
 	return resp, nil
 }
 
-func (c *AngoClient) RequestAndDecode(ctx context.Context, method, url string, body io.Reader, rt ResponseType) error {
-	resp, err := c.Request(ctx, method, url, body)
+func (c *AngoClient) requestAndDecode(ctx context.Context, method, url string, body io.Reader, rt ResponseType) error {
+	resp, err := c.request(ctx, method, url, body)
 	if err != nil {
 		return err
 	}

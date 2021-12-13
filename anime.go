@@ -10,6 +10,7 @@ import (
 	"strconv"
 )
 
+type AnimeService service
 type order string
 type list string
 type season string
@@ -115,23 +116,23 @@ const (
 	Spring season = "Spring"
 )
 
-type AnimeEndRes struct {
-	Response LatestAnimeRespond `json:"response"`
+type animeEndRes struct {
+	Response latestAnimeRespond `json:"response"`
 }
 
-func (r *AnimeEndRes) GetResult() []Anime {
+func (r *animeEndRes) GetResult() []Anime {
 	return r.Response.Data
 }
 
-type AnimeDetailsEndRes struct {
+type animeDetailsEndRes struct {
 	Response AnimeDetails `json:"response"`
 }
 
-func (r *AnimeDetailsEndRes) GetResult() AnimeDetails {
+func (r *animeDetailsEndRes) GetResult() AnimeDetails {
 	return r.Response
 }
 
-type MoreInfoResult struct {
+type moreInfoResult struct {
 	Score          string      `json:"score"`
 	ScoredBy       string      `json:"scored_by"`
 	TrailerURL     string      `json:"trailer_url"`
@@ -143,16 +144,28 @@ type MoreInfoResult struct {
 	AnimeStudioIds string      `json:"anime_studio_ids"`
 	AnimeStudios   string      `json:"anime_studios"`
 }
-type CommentFlagReasons struct {
+type commentFlagReasons struct {
 	CommentFlagReasonID string `json:"comment_flag_reason_id"`
 	FlagReason          string `json:"flag_reason"`
 	FlagReasonOrder     string `json:"flag_reason_order"`
 }
-type ContentRating struct {
+type contentRating struct {
 	ContentType string `json:"content_type"`
 	Level       string `json:"level"`
 	VoteCount   string `json:"vote_count"`
 }
+
+type metaData struct {
+	Limit   string `json:"_limit"`
+	Offset  string `json:"_offset"`
+	OrderBy string `json:"_order_by"`
+}
+
+type latestAnimeRespond struct {
+	MetaData metaData `json:"meta_data"`
+	Data     []Anime  `json:"data"`
+}
+
 type AnimeDetails struct {
 	AnimeID                string               `json:"anime_id"`
 	AnimeName              string               `json:"anime_name"`
@@ -183,19 +196,13 @@ type AnimeDetails struct {
 	AnimeBannerImageURL    interface{}          `json:"anime_banner_image_url"`
 	AnimeUpdatedAtFormat   string               `json:"anime_updated_at_format"`
 	AnimeCreatedAtFormat   string               `json:"anime_created_at_format"`
-	MoreInfoResult         MoreInfoResult       `json:"more_info_result"`
+	MoreInfoResult         moreInfoResult       `json:"more_info_result"`
 	RelatedAnimes          []interface{}        `json:"related_animes"`
 	RelatedNews            []interface{}        `json:"related_news"`
-	CommentFlagReasons     []CommentFlagReasons `json:"comment_flag_reasons"`
-	ContentRating          []ContentRating      `json:"content_rating"`
+	CommentFlagReasons     []commentFlagReasons `json:"comment_flag_reasons"`
+	ContentRating          []contentRating      `json:"content_rating"`
 	Role                   string               `json:"role"`
 	TopAnimeContributors   []interface{}        `json:"top_anime_contributors"`
-}
-
-type MetaData struct {
-	Limit   string `json:"_limit"`
-	Offset  string `json:"_offset"`
-	OrderBy string `json:"_order_by"`
 }
 
 type Anime struct {
@@ -215,47 +222,9 @@ type Anime struct {
 	AnimeReleaseDay    string `json:"anime_release_day"`
 }
 
-type LatestAnimeRespond struct {
-	MetaData MetaData `json:"meta_data"`
-	Data     []Anime  `json:"data"`
-}
-
-type AnimeService service
-
-func (s *AnimeService) GetAnime(params url.Values, path, method string) (*http.Response, error) {
-	return s.GetAnimeWithContext(context.Background(), params, path, method)
-}
-
-func (s *AnimeService) GetAnimeWithContext(ctx context.Context, params url.Values, path, method string) (*http.Response, error) {
-	u, _ := url.Parse(BaseAPI)
-	u.Path = path
-
-	u.RawQuery = params.Encode()
-
-	var res *http.Response
-	res, err := s.client.Request(ctx, method, u.String(), nil)
-	return res, err
-}
-
-func (s *AnimeService) GetAnimeList(offset, limit int, query string) ([]Anime, error) {
-	params := url.Values{}
-	params.Set("json", query)
-	res, err := s.GetAnime(params, PublishedAnimesPath, http.MethodGet)
-	if err != nil {
-		return []Anime{}, err
-	}
-
-	var animes AnimeEndRes
-	err = json.NewDecoder(res.Body).Decode(&animes)
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(res.Body)
-	return animes.GetResult(), err
-}
-
 func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"latest_updated_episode_new","just_info":"Yes"}`, offset, limit)
-	return s.GetAnimeList(offset, limit, query)
+	return s.getAnimeList(offset, limit, query)
 }
 
 func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy order) ([]Anime, error) {
@@ -263,7 +232,7 @@ func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy
 		return []Anime{}, err
 	}
 	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"%s","just_info":"Yes"}`, offset, limit, orderBy, animeName)
-	return s.GetAnimeList(offset, limit, query)
+	return s.getAnimeList(offset, limit, query)
 }
 
 func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error) {
@@ -271,7 +240,7 @@ func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error
 		return []Anime{}, err
 	}
 	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"","just_info":"Yes"}`, offset, limit, orderBy)
-	return s.GetAnimeList(offset, limit, query)
+	return s.getAnimeList(offset, limit, query)
 }
 
 func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, orderBy order, releaseYear int) ([]Anime, error) {
@@ -281,8 +250,8 @@ func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, or
 	if err := season.valid(); err != nil {
 		return []Anime{}, err
 	}
-	query := fmt.Sprintf(`https://anslayer.com/anime/public/animes/get-published-animes?json={"_offset":0,"_limit":30,"_order_by":"%s","list_type":"filter","anime_release_years":%d,"anime_season":"%s","just_info":"Yes"}`, orderBy, releaseYear, season)
-	return s.GetAnimeList(offset, limit, query)
+	query := fmt.Sprintf(`{"_offset":0,"_limit":30,"_order_by":"%s","list_type":"filter","anime_release_years":%d,"anime_season":"%s","just_info":"Yes"}`, orderBy, releaseYear, season)
+	return s.getAnimeList(offset, limit, query)
 }
 
 func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {
@@ -292,16 +261,47 @@ func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {
 	params.Set("fetch_episodes", "No")
 	params.Set("more_info", "Yes")
 
-	res, err := s.GetAnime(params, GetAnimeDetailsPath, http.MethodGet)
+	res, err := s.getAnime(params, GetAnimeDetailsPath, http.MethodGet)
 	if err != nil {
 		return AnimeDetails{}, err
 	}
 
-	var details AnimeDetailsEndRes
+	var details animeDetailsEndRes
 	err = json.NewDecoder(res.Body).Decode(&details)
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(res.Body)
 
 	return details.GetResult(), err
+}
+
+func (s *AnimeService) getAnime(params url.Values, path, method string) (*http.Response, error) {
+	return s.getAnimeWithContext(context.Background(), params, path, method)
+}
+
+func (s *AnimeService) getAnimeWithContext(ctx context.Context, params url.Values, path, method string) (*http.Response, error) {
+	u, _ := url.Parse(BaseAPI)
+	u.Path = path
+
+	u.RawQuery = params.Encode()
+
+	var res *http.Response
+	res, err := s.client.request(ctx, method, u.String(), nil)
+	return res, err
+}
+
+func (s *AnimeService) getAnimeList(offset, limit int, query string) ([]Anime, error) {
+	params := url.Values{}
+	params.Set("json", query)
+	res, err := s.getAnime(params, PublishedAnimesPath, http.MethodGet)
+	if err != nil {
+		return []Anime{}, err
+	}
+
+	var animes animeEndRes
+	err = json.NewDecoder(res.Body).Decode(&animes)
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+	return animes.GetResult(), err
 }

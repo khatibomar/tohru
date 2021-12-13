@@ -11,8 +11,49 @@ import (
 )
 
 const (
-	LatestsAnimesPath   = "anime/public/animes/get-published-animes"
+	PublishedAnimesPath = "anime/public/animes/get-published-animes"
 	GetAnimeDetailsPath = "anime/public/anime/get-anime-details"
+)
+
+const (
+	OrderByAnimeNameAsc  = "anime_name_asc"
+	OrderByAnimeNameDesc = "anime_name_desc"
+	OrderByAnimeYearAsc  = "anime_year_asc"
+	OrderByAnimeYearDesc = "anime_year_desc"
+	OrderByLatestFirst   = "latest_first"
+	OrderByEarlierFirst  = "earliest_first"
+	OrderByRatingDesc    = "anime_rating_desc"
+
+	ListTypeCustomList              = "custom_list"
+	ListTypeAnimeList               = "anime_list"
+	ListTypeCurrentlyAiring         = "currently_airing"
+	ListTypeLatestUpdatedEpisode    = "latest_updated_episode"
+	ListTypeLatestUpdatedEpisodeNew = "latest_updated_episode_new"
+	ListTypeTopAnime                = "top_anime"
+	ListTypeTopCurrentlyAiring      = "top_currently_airing"
+	ListTypeTopTv                   = "top_tv"
+	ListTypeTopMovie                = "top_movie"
+	ListTypeFeatured                = "featured"
+	ListTypeFilter                  = "filter"
+	ListTypeFavoirtes               = "watching"
+	ListTypePlanToWatch             = "plan_to_watch"
+	ListTypeWatched                 = "watched"
+	ListTypeDropped                 = "dropped"
+	ListTypeOnHold                  = "on_hold"
+	ListTypeWatchedHistory          = "watched_history"
+	ListTypeSchedule                = "schedule"
+	ListTypeLastAddedTv             = "last_added_tv"
+	ListTypeLastAddedMovie          = "last_added_movie"
+	ListTypeTopAnimeMal             = "top_anime_mal"
+	ListTypeCurrentlyAiringMal      = "top_currently_airing_mal"
+	ListTypeTopTvMal                = "top_tv_mal"
+	ListTypeAnimeCharacters         = "anime_characters"
+	ListTopUpcoming                 = "top_upcoming"
+
+	SeasonFall   = "Fall"
+	SeasonSummer = "Summer"
+	SeasonWinter = "Winter"
+	SeasonSpring = "Spring"
 )
 
 type AnimeEndRes struct {
@@ -140,10 +181,11 @@ func (s *AnimeService) GetAnimeWithContext(ctx context.Context, params url.Value
 func (s *AnimeService) GetAnimeList(offset, limit int, query string) ([]Anime, error) {
 	params := url.Values{}
 	params.Set("json", query)
-	res, err := s.GetAnime(params, LatestsAnimesPath, http.MethodGet)
+	res, err := s.GetAnime(params, PublishedAnimesPath, http.MethodGet)
 	if err != nil {
 		return []Anime{}, err
 	}
+
 	var animes AnimeEndRes
 	err = json.NewDecoder(res.Body).Decode(&animes)
 	defer func(Body io.ReadCloser) {
@@ -157,8 +199,18 @@ func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 	return s.GetAnimeList(offset, limit, query)
 }
 
-func (s *AnimeService) SearchByName(offset, limit int, animeName string) ([]Anime, error) {
-	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"filter","anime_name":"%s","just_info":"Yes"}`, offset, limit, animeName)
+func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy string) ([]Anime, error) {
+	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"%s","just_info":"Yes"}`, offset, limit, orderBy, animeName)
+	return s.GetAnimeList(offset, limit, query)
+}
+
+func (s *AnimeService) OrderBy(offset, limit int, orderBy string) ([]Anime, error) {
+	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"","just_info":"Yes"}`, offset, limit, orderBy)
+	return s.GetAnimeList(offset, limit, query)
+}
+
+func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season string, orderBy string, releaseYear int) ([]Anime, error) {
+	query := fmt.Sprintf(`https://anslayer.com/anime/public/animes/get-published-animes?json={"_offset":0,"_limit":30,"_order_by":"%s","list_type":"filter","anime_release_years":%d,"anime_season":"%s","just_info":"Yes"}`, orderBy, releaseYear, season)
 	return s.GetAnimeList(offset, limit, query)
 }
 

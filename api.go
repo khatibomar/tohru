@@ -12,6 +12,11 @@ const (
 	BaseAPI = "https://anslayer.com"
 )
 
+type errorRes struct {
+	Title  string `json:"title"`
+	Detail string `json:"detail"`
+}
+
 type service struct {
 	client *AngoClient
 }
@@ -62,7 +67,13 @@ func (c *AngoClient) Request(ctx context.Context, method, url string, body io.Re
 	if err != nil {
 		return nil, err
 	} else if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("non-200 status code -> %s", err)
+		var errRes errorRes
+		err = json.NewDecoder(resp.Body).Decode(&errRes)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		return nil, fmt.Errorf("%s : %s", errRes.Title, errRes.Detail)
 	}
 	return resp, nil
 }

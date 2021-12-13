@@ -21,10 +21,6 @@ type service struct {
 	client *AngoClient
 }
 
-type ResponseType interface {
-	GetResult() interface{}
-}
-
 type AngoClient struct {
 	cfg     *Config
 	client  *http.Client
@@ -76,18 +72,4 @@ func (c *AngoClient) request(ctx context.Context, method, url string, body io.Re
 		return nil, fmt.Errorf("%s : %s", errRes.Title, errRes.Detail)
 	}
 	return resp, nil
-}
-
-func (c *AngoClient) requestAndDecode(ctx context.Context, method, url string, body io.Reader, rt ResponseType) error {
-	resp, err := c.request(ctx, method, url, body)
-	if err != nil {
-		return err
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(rt)
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(resp.Body)
-
-	return err
 }

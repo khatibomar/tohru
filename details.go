@@ -35,6 +35,27 @@ type contentRating struct {
 	VoteCount   string `json:"vote_count"`
 }
 
+type News struct {
+	NewsID              string      `json:"news_id"`
+	AnimeID             string      `json:"anime_id"`
+	AnimeName           string      `json:"anime_name"`
+	NewsTitle           string      `json:"news_title"`
+	NewsDescription     string      `json:"news_description"`
+	NewsDescriptionHTML interface{} `json:"news_description_html"`
+	NewsImage           string      `json:"news_image"`
+	NewsSourceLink      string      `json:"news_source_link"`
+	NewsVideoLink       string      `json:"news_video_link"`
+	NewsPublished       string      `json:"news_published"`
+	NewsCreatedAt       string      `json:"news_created_at"`
+	NewsUpdatedAt       interface{} `json:"news_updated_at"`
+	NewsImageURL        string      `json:"news_image_url"`
+	NewsUpdatedAtFormat string      `json:"news_updated_at_format"`
+	NewsCreatedAtFormat string      `json:"news_created_at_format"`
+}
+type RelatedNews struct {
+	Data []News `json:"data"`
+}
+
 type AnimeDetails struct {
 	AnimeID              string               `json:"anime_id"`
 	AnimeName            string               `json:"anime_name"`
@@ -60,7 +81,7 @@ type AnimeDetails struct {
 	AnimeCreatedAtFormat string               `json:"anime_created_at_format"`
 	MoreInfoResult       moreInfoResult       `json:"more_info_result"`
 	RelatedAnimes        interface{}          `json:"related_animes"`
-	RelatedNews          []interface{}        `json:"related_news"`
+	RelatedNews          interface{}          `json:"related_news"`
 	CommentFlagReasons   []commentFlagReasons `json:"comment_flag_reasons"`
 	ContentRating        []contentRating      `json:"content_rating"`
 	Role                 string               `json:"role"`
@@ -81,6 +102,10 @@ func (ad *AnimeDetails) UnmarshalJSON(b []byte) error {
 	switch a.RelatedAnimes.(type) {
 	case []interface{}:
 		a.RelatedAnimes = RelatedAnimes{}
+	}
+	switch a.RelatedNews.(type) {
+	case []interface{}:
+		a.RelatedNews = RelatedNews{}
 	}
 	*ad = AnimeDetails(a)
 	return nil

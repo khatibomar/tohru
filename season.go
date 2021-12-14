@@ -14,6 +14,7 @@ type season string
 func (s season) valid() error {
 	switch s {
 	case Fall:
+		fallthrough
 	case Winter:
 		fallthrough
 	case Summer:

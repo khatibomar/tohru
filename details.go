@@ -66,12 +66,32 @@ type AnimeDetails struct {
 	AnimeUpdatedAtFormat   string               `json:"anime_updated_at_format"`
 	AnimeCreatedAtFormat   string               `json:"anime_created_at_format"`
 	MoreInfoResult         moreInfoResult       `json:"more_info_result"`
-	RelatedAnimes          []interface{}        `json:"related_animes"`
+	RelatedAnimes          interface{}          `json:"related_animes"`
 	RelatedNews            []interface{}        `json:"related_news"`
 	CommentFlagReasons     []commentFlagReasons `json:"comment_flag_reasons"`
 	ContentRating          []contentRating      `json:"content_rating"`
 	Role                   string               `json:"role"`
 	TopAnimeContributors   []interface{}        `json:"top_anime_contributors"`
+}
+
+type RelatedAnimes struct {
+	Animes []Anime `json:"data"`
+}
+
+// UnmarshalJSON Implements a custom marsheler
+// Because API have bad design and need to check edge cases
+func (ad *AnimeDetails) UnmarshalJSON(b []byte) error {
+	type details AnimeDetails
+	var a details
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	switch a.RelatedAnimes.(type) {
+	case []interface{}:
+		a.RelatedAnimes = RelatedAnimes{}
+	}
+	*ad = AnimeDetails(a)
+	return nil
 }
 
 func (s *AnimeService) GetAnimeDetails(animeID int) (AnimeDetails, error) {

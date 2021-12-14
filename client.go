@@ -27,7 +27,8 @@ type AngoClient struct {
 	header  http.Header
 	service service
 
-	Anime *AnimeService
+	AnimeService   *AnimeService
+	EpisodeService *EpisodeService
 }
 
 func NewAngoClient(cfg *Config) *AngoClient {
@@ -46,7 +47,8 @@ func NewAngoClient(cfg *Config) *AngoClient {
 
 	ango.service.client = ango
 
-	ango.Anime = (*AnimeService)(&ango.service)
+	ango.AnimeService = (*AnimeService)(&ango.service)
+	ango.EpisodeService = (*EpisodeService)(&ango.service)
 
 	return ango
 }
@@ -57,12 +59,17 @@ func (c *AngoClient) request(ctx context.Context, method, url string, body io.Re
 		return nil, err
 	}
 
+	if body != nil {
+		c.header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 	req.Header = c.header
 
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	} else if resp.StatusCode != 200 {
+		b, _ := io.ReadAll(resp.Body)
+		fmt.Println(string(b))
 		var errRes errorRes
 		err = json.NewDecoder(resp.Body).Decode(&errRes)
 		if err != nil {

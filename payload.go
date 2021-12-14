@@ -1,7 +1,6 @@
 package angoslayer
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -56,9 +55,4 @@ func (p *JsonPayload) WithSeason(s season) error {
 	}
 	(*p)["anime_season"] = string(s)
 	return nil
-}
-
-func (p *JsonPayload) String() (string, error) {
-	data, err := json.Marshal(*p)
-	return string(data), err
 }

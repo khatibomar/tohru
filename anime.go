@@ -80,8 +80,12 @@ func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, or
 	return s.getAnimeList(query)
 }
 
-func (s *AnimeService) CustomAnimePayload(payload string) ([]Anime, error) {
-	return s.getAnimeList(payload)
+func (s *AnimeService) CustomAnimePayload(payload JsonPayload) ([]Anime, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return []Anime{}, err
+	}
+	return s.getAnimeList(string(data))
 }
 
 func (s *AnimeService) getAnime(params url.Values, path, method string) (*http.Response, error) {

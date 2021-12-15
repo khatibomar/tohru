@@ -1,3 +1,3 @@
-module github.com/khatibomar/angoslayer
+module github.com/khatibomar/tohru
 
 go 1.17

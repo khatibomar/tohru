@@ -1,4 +1,4 @@
-package angoslayer
+package tohru
 
 import (
 	"context"
@@ -18,10 +18,10 @@ type errorRes struct {
 }
 
 type service struct {
-	client *AngoClient
+	client *TohruClient
 }
 
-type AngoClient struct {
+type TohruClient struct {
 	cfg     *Config
 	client  *http.Client
 	header  http.Header
@@ -31,7 +31,7 @@ type AngoClient struct {
 	EpisodeService *EpisodeService
 }
 
-func NewAngoClient(cfg *Config) *AngoClient {
+func NewTohruClient(cfg *Config) *TohruClient {
 	client := http.Client{}
 
 	header := http.Header{}
@@ -40,20 +40,20 @@ func NewAngoClient(cfg *Config) *AngoClient {
 	header.Set("Client-Id", cfg.clientID)
 	header.Set("Client-Secret", cfg.clientSecret)
 
-	ango := &AngoClient{
+	tohru := &TohruClient{
 		client: &client,
 		header: header,
 	}
 
-	ango.service.client = ango
+	tohru.service.client = tohru
 
-	ango.AnimeService = (*AnimeService)(&ango.service)
-	ango.EpisodeService = (*EpisodeService)(&ango.service)
+	tohru.AnimeService = (*AnimeService)(&tohru.service)
+	tohru.EpisodeService = (*EpisodeService)(&tohru.service)
 
-	return ango
+	return tohru
 }
 
-func (c *AngoClient) request(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+func (c *TohruClient) request(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err

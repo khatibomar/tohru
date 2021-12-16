@@ -126,6 +126,18 @@ func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (Down
 }
 
 func (s *EpisodeService) GetDirectDownloadLinks(animeName string, episodeNb int) (DownloadLinks, error) {
+	return s.GetDirectDownloadLinksWithMax(animeName, episodeNb, -1)
+}
+
+func (s *EpisodeService) GetFirstDirectDownloadLink(animeName string, episodeNb int) (string, error) {
+	link, err := s.GetDirectDownloadLinksWithMax(animeName, episodeNb, 1)
+	if err != nil {
+		return "", err
+	}
+	return link[0], err
+}
+
+func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadLinks, error) {
 	params := url.Values{}
 	payload := fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
 	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payload)
@@ -141,27 +153,40 @@ func (s *EpisodeService) GetDirectDownloadLinks(animeName string, episodeNb int)
 
 	d := kobayashi.Decoder{}
 
-	directLinks := make(DownloadLinks, len(dwnLinks))
-	var wg sync.WaitGroup
-	wg.Add(len(dwnLinks))
-
-	for i, link := range dwnLinks {
-		go func(link string, index int) {
-			result, err := d.Decode(link)
-			if err != nil {
-				result = ""
-			}
-			directLinks[index] = result
-			wg.Done()
-		}(link, i)
+	if len(dwnLinks) < maxNbOfLinks || maxNbOfLinks <= 0 {
+		maxNbOfLinks = len(dwnLinks)
 	}
-	wg.Wait()
-	endRes := DownloadLinks{}
-	for _, link := range directLinks {
+
+	linksChan := make(chan string)
+	var wg sync.WaitGroup
+
+	for i := 0; i < len(dwnLinks); i++ {
+		wg.Add(1)
+		go func(link string) {
+			url, _ := d.Decode(link)
+			linksChan <- url
+			wg.Done()
+		}(dwnLinks[i])
+	}
+
+	go func() {
+		wg.Wait()
+		close(linksChan)
+	}()
+
+	var endRes DownloadLinks
+	for link := range linksChan {
 		if link == "" {
 			continue
 		}
 		endRes = append(endRes, link)
+		if len(endRes) == maxNbOfLinks {
+			return endRes, nil
+		}
 	}
-	return endRes, err
+
+	if len(endRes) == 0 {
+		return DownloadLinks{}, fmt.Errorf("All links are dead")
+	}
+	return endRes, nil
 }

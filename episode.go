@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/khatibomar/kobayashi"
 )
 
 const (
@@ -120,4 +122,29 @@ func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (Down
 		_ = Body.Close()
 	}(res.Body)
 	return dwnLinks, err
+}
+
+func (s *EpisodeService) GetDirectDownloadLinks(animeName string, episodeNb int) (DownloadLinks, error) {
+	params := url.Values{}
+	payload := fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
+	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payload)
+	if err != nil {
+		return DownloadLinks{}, err
+	}
+
+	var dwnLinks DownloadLinks
+	err = json.NewDecoder(res.Body).Decode(&dwnLinks)
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+	directLinks := DownloadLinks{}
+	d := kobayashi.Decoder{}
+	for _, link := range dwnLinks {
+		l, err := d.Decode(link)
+		if err != nil {
+			continue
+		}
+		directLinks = append(directLinks, l)
+	}
+	return directLinks, err
 }

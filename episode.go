@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/khatibomar/kobayashi"
 )
@@ -137,14 +138,30 @@ func (s *EpisodeService) GetDirectDownloadLinks(animeName string, episodeNb int)
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(res.Body)
-	directLinks := DownloadLinks{}
+
 	d := kobayashi.Decoder{}
-	for _, link := range dwnLinks {
-		l, err := d.Decode(link)
-		if err != nil {
+
+	directLinks := make(DownloadLinks, len(dwnLinks))
+	var wg sync.WaitGroup
+	wg.Add(len(dwnLinks))
+
+	for i, link := range dwnLinks {
+		go func(link string, index int) {
+			result, err := d.Decode(link)
+			if err != nil {
+				result = ""
+			}
+			directLinks[index] = result
+			wg.Done()
+		}(link, i)
+	}
+	wg.Wait()
+	endRes := DownloadLinks{}
+	for _, link := range directLinks {
+		if link == "" {
 			continue
 		}
-		directLinks = append(directLinks, l)
+		endRes = append(endRes, link)
 	}
-	return directLinks, err
+	return endRes, err
 }

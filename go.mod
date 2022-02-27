@@ -1,5 +1,5 @@
-module github.com/khatibomar/tohru
+module codeberg.org/omarkhatib/tohru
 
 go 1.17
 
-require github.com/khatibomar/kobayashi v0.0.0-20211216065057-5e57f7c1613e
+require codeberg.org/omarkhatib/kobayashi v0.0.0-20220227225537-548d1a3ffaf3

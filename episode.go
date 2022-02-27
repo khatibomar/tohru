@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/khatibomar/kobayashi"
+	"codeberg.org/omarkhatib/kobayashi"
 )
 
 const (

@@ -19,6 +19,7 @@ type errorRes struct {
 
 type service struct {
 	client *TohruClient
+	cfg    *Config
 }
 
 type TohruClient struct {
@@ -43,6 +44,7 @@ func NewTohruClient(cfg *Config) *TohruClient {
 	tohru := &TohruClient{
 		client: &client,
 		header: header,
+		cfg:    cfg,
 	}
 
 	tohru.service.client = tohru

@@ -2,20 +2,28 @@ package tohru
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 
 	"codeberg.org/omarkhatib/kobayashi"
+	rncryptor "github.com/RNCryptor/RNCryptor-go"
 )
 
 const (
 	GetEpisodePath      = "/anime/public/episodes/get-episodes-new"
 	EpisodeDownloadPath = "/la/public/api/fw"
+	BackupLinksPath     = "/anime/public/v-qs.php"
+)
+
+var (
+	BackupLinkErr = fmt.Errorf("Error while getting backup links")
 )
 
 type EpisodeService service
@@ -137,6 +145,11 @@ func (s *EpisodeService) GetFirstDirectDownloadLink(animeName string, episodeNb 
 	return link[0], err
 }
 
+type BackupLinks []struct {
+	File  string `json:"file"`
+	Label string `json:"label"`
+}
+
 func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadLinks, error) {
 	params := url.Values{}
 	payload := fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
@@ -185,6 +198,58 @@ func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episode
 		}
 	}
 
+	if len(endRes) == 0 {
+		return s.GetBackupLinks(animeName, episodeNb)
+	}
+
+	return endRes, nil
+}
+
+func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (DownloadLinks, error) {
+	var endRes []string
+	if s.client.cfg.backupLinksSecret != "" {
+		apiUrl := BaseAPI
+		resource := BackupLinksPath
+		data := url.Values{}
+		data.Set("f", animeName)
+		data.Set("e", fmt.Sprintf("%d", episodeNb))
+		data.Set("inf", `{"a": "UZDyJ8oRr3eFdNwJ0fynLrutZwyl89xCHORi2dy+/k5PtJyjg22p75JwZSyPtTSBdJCZo+WJiuR9gpxhTGWA0tZykydix3NY2UgfQPL9IXp3IL/VrNc2lS8rYUvXrCaUJEssegHOWS3+S8B3OFqSPg==", "b": "198.7.62.204"}`)
+
+		u, _ := url.ParseRequestURI(apiUrl)
+		u.Path = resource
+		urlStr := u.String()
+
+		client := &http.Client{}
+		r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+		res, err := client.Do(r)
+		if err != nil {
+			return DownloadLinks{}, err
+		}
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return DownloadLinks{}, err
+		}
+
+		var backuplinks BackupLinks
+		encrypted, err := base64.StdEncoding.DecodeString(string(body))
+		if err != nil {
+			return DownloadLinks{}, BackupLinkErr
+		}
+		decrypted, err := rncryptor.Decrypt(s.client.cfg.backupLinksSecret, encrypted)
+		if err != nil {
+			return DownloadLinks{}, BackupLinkErr
+		}
+		if err := json.Unmarshal(decrypted, &backuplinks); err != nil {
+			return DownloadLinks{}, BackupLinkErr
+		}
+		for _, bl := range backuplinks {
+			endRes = append(endRes, bl.File)
+		}
+	}
 	if len(endRes) == 0 {
 		return DownloadLinks{}, fmt.Errorf("All links are dead")
 	}

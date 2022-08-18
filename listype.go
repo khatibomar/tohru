@@ -85,5 +85,5 @@ func (l listType) valid() error {
 	case TopUpcoming:
 		return nil
 	}
-	return fmt.Errorf("Invalid list type , Please use predefined list types by package")
+	return fmt.Errorf("invalid list type , Please use predefined list types by package")
 }

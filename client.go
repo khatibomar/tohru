@@ -19,7 +19,6 @@ type errorRes struct {
 
 type service struct {
 	client *TohruClient
-	cfg    *Config
 }
 
 type TohruClient struct {

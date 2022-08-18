@@ -22,5 +22,5 @@ func (s season) valid() error {
 	case Spring:
 		return nil
 	}
-	return fmt.Errorf("Invalid season, Please use predefined seasons by package")
+	return fmt.Errorf("invalid season, Please use predefined seasons by package")
 }

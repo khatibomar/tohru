@@ -31,5 +31,5 @@ func (o order) valid() error {
 	case EarlierFirst:
 		return nil
 	}
-	return fmt.Errorf("Invalid order, Please use predefined orders by package")
+	return fmt.Errorf("invalid order, Please use predefined orders by package")
 }

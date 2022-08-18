@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -23,7 +22,7 @@ const (
 )
 
 var (
-	BackupLinkErr = fmt.Errorf("Error while getting backup links")
+	ErrBackupLink = fmt.Errorf("error while getting backup links")
 )
 
 type EpisodeService service
@@ -160,6 +159,9 @@ func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episode
 
 	var dwnLinks DownloadLinks
 	err = json.NewDecoder(res.Body).Decode(&dwnLinks)
+	if err != nil {
+		return DownloadLinks{}, err
+	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(res.Body)
@@ -229,7 +231,7 @@ func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (Downlo
 		}
 		defer res.Body.Close()
 
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return DownloadLinks{}, err
 		}
@@ -237,21 +239,21 @@ func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (Downlo
 		var backuplinks BackupLinks
 		encrypted, err := base64.StdEncoding.DecodeString(string(body))
 		if err != nil {
-			return DownloadLinks{}, BackupLinkErr
+			return DownloadLinks{}, ErrBackupLink
 		}
 		decrypted, err := rncryptor.Decrypt(s.client.cfg.backupLinksSecret, encrypted)
 		if err != nil {
-			return DownloadLinks{}, BackupLinkErr
+			return DownloadLinks{}, ErrBackupLink
 		}
 		if err := json.Unmarshal(decrypted, &backuplinks); err != nil {
-			return DownloadLinks{}, BackupLinkErr
+			return DownloadLinks{}, ErrBackupLink
 		}
 		for _, bl := range backuplinks {
 			endRes = append(endRes, bl.File)
 		}
 	}
 	if len(endRes) == 0 {
-		return DownloadLinks{}, fmt.Errorf("All links are dead")
+		return DownloadLinks{}, fmt.Errorf("all links are dead")
 	}
 	return endRes, nil
 }

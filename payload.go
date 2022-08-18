@@ -16,7 +16,7 @@ func (p *JsonPayload) WithOrder(o order) error {
 
 func (p *JsonPayload) WithOffset(offset int) error {
 	if offset < 0 {
-		return fmt.Errorf("Negative Offset")
+		return fmt.Errorf("negative Offset")
 	}
 	(*p)["_offset"] = offset
 	return nil
@@ -24,7 +24,7 @@ func (p *JsonPayload) WithOffset(offset int) error {
 
 func (p *JsonPayload) WithLimit(limit int) error {
 	if limit <= 0 {
-		return fmt.Errorf("Negative limit or zero")
+		return fmt.Errorf("negative limit or zero")
 	}
 	(*p)["_limit"] = limit
 	return nil
@@ -42,7 +42,7 @@ func (p *JsonPayload) WithJustInfo(info string) error {
 		(*p)["just_info"] = info
 		return nil
 	}
-	return fmt.Errorf("Value must be Yes or No")
+	return fmt.Errorf("value must be Yes or No")
 }
 func (p *JsonPayload) WithName(name string) error {
 	(*p)["anime_name"] = name

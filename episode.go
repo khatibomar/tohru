@@ -65,7 +65,14 @@ type episodesResponse struct {
 	Count    int       `json:"count"`
 }
 
+type DownloadInfo struct {
+	EpisodeHostLink           string
+	EpisodeDirectDownloadLink string
+}
+
 type DownloadLinks []string
+
+type DownloadInfos []DownloadInfo
 
 func (s *EpisodeService) getEpisode(params url.Values, path, method, payload string) (*http.Response, error) {
 	return s.getEpisodeWithContext(context.Background(), params, path, method, payload)
@@ -132,14 +139,14 @@ func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (Down
 	return dwnLinks, err
 }
 
-func (s *EpisodeService) GetDirectDownloadLinks(animeName string, episodeNb int) (DownloadLinks, error) {
-	return s.GetDirectDownloadLinksWithMax(animeName, episodeNb, -1)
+func (s *EpisodeService) GetDirectDownloadInfos(animeName string, episodeNb int) (DownloadInfos, error) {
+	return s.GetDirectDownloadInfosWithMax(animeName, episodeNb, -1)
 }
 
-func (s *EpisodeService) GetFirstDirectDownloadLink(animeName string, episodeNb int) (string, error) {
-	link, err := s.GetDirectDownloadLinksWithMax(animeName, episodeNb, 1)
+func (s *EpisodeService) GetFirstDirectDownloadInfo(animeName string, episodeNb int) (DownloadInfo, error) {
+	link, err := s.GetDirectDownloadInfosWithMax(animeName, episodeNb, 1)
 	if err != nil {
-		return "", err
+		return DownloadInfo{}, err
 	}
 	return link[0], err
 }
@@ -149,18 +156,18 @@ type BackupLinks []struct {
 	Label string `json:"label"`
 }
 
-func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadLinks, error) {
+func (s *EpisodeService) GetDirectDownloadInfosWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadInfos, error) {
 	params := url.Values{}
 	payload := fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
 	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payload)
 	if err != nil {
-		return DownloadLinks{}, err
+		return DownloadInfos{}, err
 	}
 
 	var dwnLinks DownloadLinks
 	err = json.NewDecoder(res.Body).Decode(&dwnLinks)
 	if err != nil {
-		return DownloadLinks{}, err
+		return DownloadInfos{}, err
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -172,14 +179,14 @@ func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episode
 		maxNbOfLinks = len(dwnLinks)
 	}
 
-	linksChan := make(chan string)
+	linksChan := make(chan DownloadInfo)
 	var wg sync.WaitGroup
 
 	for i := 0; i < len(dwnLinks); i++ {
 		wg.Add(1)
 		go func(link string) {
 			url, _ := d.Decode(link)
-			linksChan <- url
+			linksChan <- DownloadInfo{link, url}
 			wg.Done()
 		}(dwnLinks[i])
 	}
@@ -189,9 +196,9 @@ func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episode
 		close(linksChan)
 	}()
 
-	var endRes DownloadLinks
+	var endRes DownloadInfos
 	for link := range linksChan {
-		if link == "" {
+		if link.EpisodeDirectDownloadLink == "" {
 			continue
 		}
 		endRes = append(endRes, link)
@@ -207,8 +214,8 @@ func (s *EpisodeService) GetDirectDownloadLinksWithMax(animeName string, episode
 	return endRes, nil
 }
 
-func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (DownloadLinks, error) {
-	var endRes []string
+func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (DownloadInfos, error) {
+	var endRes []DownloadInfo
 	if s.client.cfg.backupLinksSecret != "" {
 		apiUrl := BaseAPI
 		resource := BackupLinksPath
@@ -227,33 +234,33 @@ func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (Downlo
 
 		res, err := client.Do(r)
 		if err != nil {
-			return DownloadLinks{}, err
+			return DownloadInfos{}, err
 		}
 		defer res.Body.Close()
 
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return DownloadLinks{}, err
+			return DownloadInfos{}, err
 		}
 
 		var backuplinks BackupLinks
 		encrypted, err := base64.StdEncoding.DecodeString(string(body))
 		if err != nil {
-			return DownloadLinks{}, ErrBackupLink
+			return DownloadInfos{}, ErrBackupLink
 		}
 		decrypted, err := rncryptor.Decrypt(s.client.cfg.backupLinksSecret, encrypted)
 		if err != nil {
-			return DownloadLinks{}, ErrBackupLink
+			return DownloadInfos{}, ErrBackupLink
 		}
 		if err := json.Unmarshal(decrypted, &backuplinks); err != nil {
-			return DownloadLinks{}, ErrBackupLink
+			return DownloadInfos{}, ErrBackupLink
 		}
 		for _, bl := range backuplinks {
-			endRes = append(endRes, bl.File)
+			endRes = append(endRes, DownloadInfo{"Backup link", bl.File})
 		}
 	}
 	if len(endRes) == 0 {
-		return DownloadLinks{}, fmt.Errorf("all links are dead")
+		return DownloadInfos{}, fmt.Errorf("all links are dead")
 	}
 	return endRes, nil
 }

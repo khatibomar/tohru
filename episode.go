@@ -222,7 +222,7 @@ func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (Downlo
 		data := url.Values{}
 		data.Set("f", animeName)
 		data.Set("e", fmt.Sprintf("%d", episodeNb))
-		data.Set("inf", `{"a": "UZDyJ8oRr3eFdNwJ0fynLrutZwyl89xCHORi2dy+/k5PtJyjg22p75JwZSyPtTSBdJCZo+WJiuR9gpxhTGWA0tZykydix3NY2UgfQPL9IXp3IL/VrNc2lS8rYUvXrCaUJEssegHOWS3+S8B3OFqSPg==", "b": "198.7.62.204"}`)
+		data.Set("inf", `{"a": "4+mwbwVfA5wLr7a4GBQvzMy1/jO9fRQ/lKJXNS4vbW/FqNL3j0vtOPd5pQx2UxrJ/8UF0Xr/v/dxkse3tjvEg/1uLKKZM8CALrQrGtw0pQqZ+UiyBJqVXe9tlbFSkV9XQRkIC6qjY66uzkzk6wauPw==", "b": "217.138.207.148"}`)
 
 		u, _ := url.ParseRequestURI(apiUrl)
 		u.Path = resource

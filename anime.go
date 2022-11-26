@@ -49,35 +49,148 @@ type Anime struct {
 }
 
 func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
-	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"latest_first","list_type":"latest_updated_episode_new","just_info":"Yes"}`, offset, limit)
+	payload := JsonPayload{}
+	var err error
+	var json string
+
+	err = payload.WithOffset(offset)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithLimit(limit)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithOrder(LatestFirst)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithListType(LatestUpdatedEpisodeNew)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithJustInfo("Yes")
+	if err != nil {
+		return []Anime{}, err
+	}
+
+	json, err = payload.ToJson()
+	if err != nil {
+		return []Anime{}, err
+	}
+	query := fmt.Sprintf(json, offset, limit)
 	return s.getAnimeList(query)
 }
 
 func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy order) ([]Anime, error) {
-	if err := orderBy.valid(); err != nil {
+	payload := JsonPayload{}
+	var err error
+	var json string
+
+	err = payload.WithOffset(offset)
+	if err != nil {
 		return []Anime{}, err
 	}
-	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"%s","just_info":"Yes"}`, offset, limit, orderBy, animeName)
-	return s.getAnimeList(query)
+	err = payload.WithLimit(limit)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithOrder(orderBy)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithListType(Filter)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithJustInfo("Yes")
+	if err != nil {
+		return []Anime{}, err
+	}
+	payload.WithName(animeName)
+
+	json, err = payload.ToJson()
+	if err != nil {
+		return []Anime{}, err
+	}
+	return s.getAnimeList(json)
 }
 
 func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error) {
-	if err := orderBy.valid(); err != nil {
+	payload := JsonPayload{}
+	var err error
+	var json string
+
+	err = payload.WithOffset(offset)
+	if err != nil {
 		return []Anime{}, err
 	}
-	query := fmt.Sprintf(`{"_offset":%d,"_limit":%d,"_order_by":"%s","list_type":"filter","anime_name":"","just_info":"Yes"}`, offset, limit, orderBy)
-	return s.getAnimeList(query)
+	err = payload.WithLimit(limit)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithOrder(orderBy)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithListType(Filter)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithJustInfo("Yes")
+	if err != nil {
+		return []Anime{}, err
+	}
+	payload.WithName("")
+
+	json, err = payload.ToJson()
+	if err != nil {
+		return []Anime{}, err
+	}
+	return s.getAnimeList(json)
 }
 
 func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, orderBy order, releaseYear int) ([]Anime, error) {
-	if err := orderBy.valid(); err != nil {
+	payload := JsonPayload{}
+	var err error
+	var json string
+
+	err = payload.WithOffset(offset)
+	if err != nil {
 		return []Anime{}, err
 	}
-	if err := season.valid(); err != nil {
+	err = payload.WithLimit(limit)
+	if err != nil {
 		return []Anime{}, err
 	}
-	query := fmt.Sprintf(`{"_offset":0,"_limit":30,"_order_by":"%s","list_type":"filter","anime_release_years":%d,"anime_season":"%s","just_info":"Yes"}`, orderBy, releaseYear, season)
-	return s.getAnimeList(query)
+	err = payload.WithOrder(orderBy)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithListType(Filter)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithJustInfo("Yes")
+	if err != nil {
+		return []Anime{}, err
+	}
+	payload.WithName("")
+
+	err = payload.WithSeason(season)
+	if err != nil {
+		return []Anime{}, err
+	}
+	err = payload.WithReleaseYear(releaseYear)
+	if err != nil {
+		return []Anime{}, err
+	}
+
+	json, err = payload.ToJson()
+	if err != nil {
+		return []Anime{}, err
+	}
+	return s.getAnimeList(json)
 }
 
 func (s *AnimeService) CustomAnimePayload(payload JsonPayload) ([]Anime, error) {

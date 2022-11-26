@@ -1,6 +1,7 @@
 package tohru
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -44,9 +45,9 @@ func (p *JsonPayload) WithJustInfo(info string) error {
 	}
 	return fmt.Errorf("value must be Yes or No")
 }
-func (p *JsonPayload) WithName(name string) error {
+
+func (p *JsonPayload) WithName(name string) {
 	(*p)["anime_name"] = name
-	return nil
 }
 
 func (p *JsonPayload) WithSeason(s season) error {
@@ -55,4 +56,17 @@ func (p *JsonPayload) WithSeason(s season) error {
 	}
 	(*p)["anime_season"] = string(s)
 	return nil
+}
+
+func (p *JsonPayload) WithReleaseYear(year int) error {
+	if year <= 0 {
+		return fmt.Errorf("Year must be positive")
+	}
+	(*p)["anime_release_years"] = year
+	return nil
+}
+
+func (p *JsonPayload) ToJson() (string, error) {
+	json, err := json.Marshal(p)
+	return string(json), err
 }

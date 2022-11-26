@@ -3,7 +3,6 @@ package tohru
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -78,8 +77,7 @@ func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 	if err != nil {
 		return []Anime{}, err
 	}
-	query := fmt.Sprintf(payloadStr, offset, limit)
-	return s.getAnimeList(query)
+	return s.getAnimeList(payloadStr)
 }
 
 func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy order) ([]Anime, error) {

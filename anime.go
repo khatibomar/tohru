@@ -51,7 +51,7 @@ type Anime struct {
 func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 	payload := JsonPayload{}
 	var err error
-	var json string
+	var payloadStr string
 
 	err = payload.WithOffset(offset)
 	if err != nil {
@@ -74,18 +74,18 @@ func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 		return []Anime{}, err
 	}
 
-	json, err = payload.ToJson()
+	payloadStr, err = payload.ToJson()
 	if err != nil {
 		return []Anime{}, err
 	}
-	query := fmt.Sprintf(json, offset, limit)
+	query := fmt.Sprintf(payloadStr, offset, limit)
 	return s.getAnimeList(query)
 }
 
 func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy order) ([]Anime, error) {
 	payload := JsonPayload{}
 	var err error
-	var json string
+	var payloadStr string
 
 	err = payload.WithOffset(offset)
 	if err != nil {
@@ -109,17 +109,17 @@ func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy
 	}
 	payload.WithName(animeName)
 
-	json, err = payload.ToJson()
+	payloadStr, err = payload.ToJson()
 	if err != nil {
 		return []Anime{}, err
 	}
-	return s.getAnimeList(json)
+	return s.getAnimeList(payloadStr)
 }
 
 func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error) {
 	payload := JsonPayload{}
 	var err error
-	var json string
+	var payloadStr string
 
 	err = payload.WithOffset(offset)
 	if err != nil {
@@ -143,17 +143,17 @@ func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error
 	}
 	payload.WithName("")
 
-	json, err = payload.ToJson()
+	payloadStr, err = payload.ToJson()
 	if err != nil {
 		return []Anime{}, err
 	}
-	return s.getAnimeList(json)
+	return s.getAnimeList(payloadStr)
 }
 
 func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, orderBy order, releaseYear int) ([]Anime, error) {
 	payload := JsonPayload{}
 	var err error
-	var json string
+	var payloadStr string
 
 	err = payload.WithOffset(offset)
 	if err != nil {
@@ -186,11 +186,11 @@ func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, or
 		return []Anime{}, err
 	}
 
-	json, err = payload.ToJson()
+	payloadStr, err = payload.ToJson()
 	if err != nil {
 		return []Anime{}, err
 	}
-	return s.getAnimeList(json)
+	return s.getAnimeList(payloadStr)
 }
 
 func (s *AnimeService) CustomAnimePayload(payload JsonPayload) ([]Anime, error) {

@@ -93,8 +93,23 @@ func (s *EpisodeService) getEpisodeWithContext(ctx context.Context, params url.V
 
 func (s *EpisodeService) GetEpisodesList(animeID int) ([]Episode, error) {
 	params := url.Values{}
-	payload := fmt.Sprintf(`json={"more_info":"No","anime_id":%d}`, animeID)
-	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, payload)
+	var payload JsonPayload
+	var err error
+	var payloadStr string
+
+	err = payload.WithJustInfo("No")
+	if err != nil {
+		return []Episode{}, err
+	}
+	err = payload.WithAnimeId(animeID)
+	if err != nil {
+		return []Episode{}, err
+	}
+	payloadStr, err = payload.ToJson()
+	if err != nil {
+		return []Episode{}, err
+	}
+	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, payloadStr)
 	if err != nil {
 		return []Episode{}, err
 	}
@@ -109,8 +124,23 @@ func (s *EpisodeService) GetEpisodesList(animeID int) ([]Episode, error) {
 
 func (s *EpisodeService) GetEpisodeDetails(animeID, episodeID int) (Episode, error) {
 	params := url.Values{}
-	payload := fmt.Sprintf(`json={"episode_id":%d,"anime_id":%d}`, episodeID, animeID)
-	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, payload)
+	var payload JsonPayload
+	var err error
+	var payloadStr string
+
+	err = payload.WithEpisodeId(episodeID)
+	if err != nil {
+		return Episode{}, err
+	}
+	err = payload.WithAnimeId(animeID)
+	if err != nil {
+		return Episode{}, err
+	}
+	payloadStr, err = payload.ToJson()
+	if err != nil {
+		return Episode{}, err
+	}
+	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, payloadStr)
 	if err != nil {
 		return Episode{}, err
 	}
@@ -125,8 +155,22 @@ func (s *EpisodeService) GetEpisodeDetails(animeID, episodeID int) (Episode, err
 
 func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (DownloadLinks, error) {
 	params := url.Values{}
-	payload := fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
-	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payload)
+
+	var payload JsonPayload
+	var err error
+	var payloadStr string
+
+	err = payload.WithN(animeName, episodeNb)
+	if err != nil {
+		return DownloadLinks{}, err
+	}
+
+	payloadStr, err = payload.ToJson()
+	if err != nil {
+		return DownloadLinks{}, err
+	}
+
+	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payloadStr)
 	if err != nil {
 		return DownloadLinks{}, err
 	}
@@ -158,8 +202,21 @@ type BackupLinks []struct {
 
 func (s *EpisodeService) GetDirectDownloadInfosWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadInfos, error) {
 	params := url.Values{}
-	payload := fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
-	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payload)
+	var payload JsonPayload
+	var err error
+	var payloadStr string
+
+	err = payload.WithN(animeName, episodeNb)
+	if err != nil {
+		return DownloadInfos{}, err
+	}
+
+	payloadStr, err = payload.ToJson()
+	if err != nil {
+		return DownloadInfos{}, err
+	}
+
+	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payloadStr)
 	if err != nil {
 		return DownloadInfos{}, err
 	}

@@ -60,9 +60,33 @@ func (p *JsonPayload) WithSeason(s season) error {
 
 func (p *JsonPayload) WithReleaseYear(year int) error {
 	if year <= 0 {
-		return fmt.Errorf("Year must be positive")
+		return fmt.Errorf("year must be positive")
 	}
 	(*p)["anime_release_years"] = year
+	return nil
+}
+
+func (p *JsonPayload) WithAnimeId(id int) error {
+	if id <= 0 {
+		return fmt.Errorf("anime id must be positive")
+	}
+	(*p)["anime_id"] = id
+	return nil
+}
+
+func (p *JsonPayload) WithEpisodeId(id int) error {
+	if id <= 0 {
+		return fmt.Errorf("episode id must be positive")
+	}
+	(*p)["episode_id"] = id
+	return nil
+}
+
+func (p *JsonPayload) WithN(animeName string, episodeNb int) error {
+	if episodeNb < 0 {
+		return fmt.Errorf("episode number must be positive")
+	}
+	(*p)["n"] = fmt.Sprintf(`%s\%d`, animeName, episodeNb)
 	return nil
 }
 

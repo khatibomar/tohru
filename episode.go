@@ -109,7 +109,7 @@ func (s *EpisodeService) GetEpisodesList(animeID int) ([]Episode, error) {
 	if err != nil {
 		return []Episode{}, err
 	}
-	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, payloadStr)
+	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, "json="+payloadStr)
 	if err != nil {
 		return []Episode{}, err
 	}
@@ -140,7 +140,7 @@ func (s *EpisodeService) GetEpisodeDetails(animeID, episodeID int) (Episode, err
 	if err != nil {
 		return Episode{}, err
 	}
-	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, payloadStr)
+	res, err := s.getEpisode(params, GetEpisodePath, http.MethodPost, "json="+payloadStr)
 	if err != nil {
 		return Episode{}, err
 	}

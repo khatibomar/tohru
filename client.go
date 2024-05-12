@@ -69,8 +69,10 @@ func (c *TohruClient) request(ctx context.Context, method, url string, body io.R
 	if err != nil {
 		return nil, err
 	} else if resp.StatusCode != 200 {
-		b, _ := io.ReadAll(resp.Body)
-		fmt.Println(string(b))
+		_, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
 		var errRes errorRes
 		err = json.NewDecoder(resp.Body).Decode(&errRes)
 		if err != nil {

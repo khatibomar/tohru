@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"codeberg.org/omarkhatib/kobayashi"
+	"github.com/khatibomar/kobayashi"
 	rncryptor "github.com/RNCryptor/RNCryptor-go"
 )
 

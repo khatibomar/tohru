@@ -158,7 +158,7 @@ func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (Down
 
 	var err error
 
-	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, fmt.Sprintf(`n=%s\%d`, animeName, episodeNb))
+	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, constructN(animeName, episodeNb))
 	if err != nil {
 		return DownloadLinks{}, err
 	}
@@ -190,21 +190,9 @@ type BackupLinks []struct {
 
 func (s *EpisodeService) GetDirectDownloadInfosWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadInfos, error) {
 	params := url.Values{}
-	payload := make(JsonPayload)
 	var err error
-	var payloadStr string
 
-	err = payload.WithN(animeName, episodeNb)
-	if err != nil {
-		return DownloadInfos{}, err
-	}
-
-	payloadStr, err = payload.ToJson()
-	if err != nil {
-		return DownloadInfos{}, err
-	}
-
-	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payloadStr)
+	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, constructN(animeName, episodeNb))
 	if err != nil {
 		return DownloadInfos{}, err
 	}
@@ -308,4 +296,8 @@ func (s *EpisodeService) GetBackupLinks(animeName string, episodeNb int) (Downlo
 		return DownloadInfos{}, fmt.Errorf("all links are dead")
 	}
 	return endRes, nil
+}
+
+func constructN(animeName string, episodeNb int) string {
+	return fmt.Sprintf(`n=%s\%d`, animeName, episodeNb)
 }

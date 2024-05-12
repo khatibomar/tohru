@@ -82,14 +82,6 @@ func (p *JsonPayload) WithEpisodeId(id int) error {
 	return nil
 }
 
-func (p *JsonPayload) WithN(animeName string, episodeNb int) error {
-	if episodeNb < 0 {
-		return fmt.Errorf("episode number must be positive")
-	}
-	(*p)["n"] = fmt.Sprintf(`%s\%d`, animeName, episodeNb)
-	return nil
-}
-
 func (p *JsonPayload) ToJson() (string, error) {
 	json, err := json.Marshal(p)
 	return string(json), err

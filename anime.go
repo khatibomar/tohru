@@ -48,7 +48,8 @@ type Anime struct {
 }
 
 func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
-	payload := JsonPayload{}
+	payload := make(JsonPayload)
+
 	var err error
 	var payloadStr string
 
@@ -81,7 +82,7 @@ func (s *AnimeService) GetLatestAnimes(offset, limit int) ([]Anime, error) {
 }
 
 func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy order) ([]Anime, error) {
-	payload := JsonPayload{}
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 
@@ -115,7 +116,7 @@ func (s *AnimeService) SearchByName(offset, limit int, animeName string, orderBy
 }
 
 func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error) {
-	payload := JsonPayload{}
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 
@@ -149,7 +150,7 @@ func (s *AnimeService) OrderBy(offset, limit int, orderBy order) ([]Anime, error
 }
 
 func (s *AnimeService) GetAnimeListBySeason(offset, limit int, season season, orderBy order, releaseYear int) ([]Anime, error) {
-	payload := JsonPayload{}
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 

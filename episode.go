@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/khatibomar/kobayashi"
 	rncryptor "github.com/RNCryptor/RNCryptor-go"
+	"github.com/khatibomar/kobayashi"
 )
 
 const (
@@ -93,7 +93,7 @@ func (s *EpisodeService) getEpisodeWithContext(ctx context.Context, params url.V
 
 func (s *EpisodeService) GetEpisodesList(animeID int) ([]Episode, error) {
 	params := url.Values{}
-	var payload JsonPayload
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 
@@ -124,7 +124,7 @@ func (s *EpisodeService) GetEpisodesList(animeID int) ([]Episode, error) {
 
 func (s *EpisodeService) GetEpisodeDetails(animeID, episodeID int) (Episode, error) {
 	params := url.Values{}
-	var payload JsonPayload
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 
@@ -156,7 +156,7 @@ func (s *EpisodeService) GetEpisodeDetails(animeID, episodeID int) (Episode, err
 func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (DownloadLinks, error) {
 	params := url.Values{}
 
-	var payload JsonPayload
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 
@@ -202,7 +202,7 @@ type BackupLinks []struct {
 
 func (s *EpisodeService) GetDirectDownloadInfosWithMax(animeName string, episodeNb int, maxNbOfLinks int) (DownloadInfos, error) {
 	params := url.Values{}
-	var payload JsonPayload
+	payload := make(JsonPayload)
 	var err error
 	var payloadStr string
 

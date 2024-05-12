@@ -34,56 +34,14 @@ type listType string
 
 func (l listType) valid() error {
 	switch l {
-	case CustomList:
-		fallthrough
-	case AnimeList:
-		fallthrough
-	case CurrentlyAiring:
-		fallthrough
-	case LatestUpdatedEpisode:
-		fallthrough
-	case LatestUpdatedEpisodeNew:
-		fallthrough
-	case TopAnime:
-		fallthrough
-	case TopCurrentlyAiring:
-		fallthrough
-	case TopTv:
-		fallthrough
-	case TopMovie:
-		fallthrough
-	case Featured:
-		fallthrough
-	case Filter:
-		fallthrough
-	case Favoirtes:
-		fallthrough
-	case PlanToWatch:
-		fallthrough
-	case Watched:
-		fallthrough
-	case Dropped:
-		fallthrough
-	case OnHold:
-		fallthrough
-	case WatchedHistory:
-		fallthrough
-	case Schedule:
-		fallthrough
-	case LastAddedTv:
-		fallthrough
-	case LastAddedMovie:
-		fallthrough
-	case TopAnimeMal:
-		fallthrough
-	case CurrentlyAiringMal:
-		fallthrough
-	case TopTvMal:
-		fallthrough
-	case AnimeCharacters:
-		fallthrough
-	case TopUpcoming:
+	case CustomList, AnimeList,
+		CurrentlyAiring, TopCurrentlyAiring, CurrentlyAiringMal,
+		LatestUpdatedEpisode, LatestUpdatedEpisodeNew, LastAddedMovie, LastAddedTv,
+		AnimeCharacters, Featured, Filter, Favoirtes,
+		PlanToWatch, Watched, Dropped, OnHold, WatchedHistory, Schedule,
+		TopAnimeMal, TopTvMal, TopAnime, TopTv, TopMovie, TopUpcoming:
 		return nil
+	default:
+		return fmt.Errorf("invalid list type , Please use predefined list types by package")
 	}
-	return fmt.Errorf("invalid list type , Please use predefined list types by package")
 }

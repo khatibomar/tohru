@@ -16,20 +16,9 @@ type order string
 
 func (o order) valid() error {
 	switch o {
-	case AnimeNameAsc:
-		fallthrough
-	case AnimeNameDesc:
-		fallthrough
-	case AnimeYearAsc:
-		fallthrough
-	case AnimeYearDesc:
-		fallthrough
-	case LatestFirst:
-		fallthrough
-	case RatingDesc:
-		fallthrough
-	case EarlierFirst:
+	case AnimeNameAsc, AnimeNameDesc, AnimeYearAsc, AnimeYearDesc, LatestFirst, RatingDesc, EarlierFirst:
 		return nil
+	default:
+		return fmt.Errorf("invalid order, Please use predefined orders by package")
 	}
-	return fmt.Errorf("invalid order, Please use predefined orders by package")
 }

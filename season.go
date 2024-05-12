@@ -13,14 +13,9 @@ type season string
 
 func (s season) valid() error {
 	switch s {
-	case Fall:
-		fallthrough
-	case Winter:
-		fallthrough
-	case Summer:
-		fallthrough
-	case Spring:
+	case Fall, Winter, Summer, Spring:
 		return nil
+	default:
+		return fmt.Errorf("invalid season, Please use predefined seasons by package")
 	}
-	return fmt.Errorf("invalid season, Please use predefined seasons by package")
 }

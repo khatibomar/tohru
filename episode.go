@@ -156,21 +156,9 @@ func (s *EpisodeService) GetEpisodeDetails(animeID, episodeID int) (Episode, err
 func (s *EpisodeService) GetDownloadLinks(animeName string, episodeNb int) (DownloadLinks, error) {
 	params := url.Values{}
 
-	payload := make(JsonPayload)
 	var err error
-	var payloadStr string
 
-	err = payload.WithN(animeName, episodeNb)
-	if err != nil {
-		return DownloadLinks{}, err
-	}
-
-	payloadStr, err = payload.ToJson()
-	if err != nil {
-		return DownloadLinks{}, err
-	}
-
-	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, payloadStr)
+	res, err := s.getEpisode(params, EpisodeDownloadPath, http.MethodPost, fmt.Sprintf(`n=%s\%d`, animeName, episodeNb))
 	if err != nil {
 		return DownloadLinks{}, err
 	}

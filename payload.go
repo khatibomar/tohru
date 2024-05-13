@@ -40,11 +40,13 @@ func (p JsonPayload) WithListType(l listType) error {
 }
 
 func (p JsonPayload) WithJustInfo(info string) error {
-	if info != "No" && info != "Yes" {
+	switch info {
+	case "Yes", "No":
+		p["just_info"] = info
+		return nil
+	default:
 		return fmt.Errorf("value must be Yes or No")
 	}
-	p["just_info"] = info
-	return nil
 }
 
 func (p JsonPayload) WithName(name string) {

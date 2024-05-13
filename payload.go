@@ -40,7 +40,7 @@ func (p JsonPayload) WithListType(l listType) error {
 }
 
 func (p JsonPayload) WithJustInfo(info string) error {
-	if info != "No" || info != "Yes" {
+	if info != "No" && info != "Yes" {
 		return fmt.Errorf("value must be Yes or No")
 	}
 	p["just_info"] = info
